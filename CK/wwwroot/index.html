@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đặt phòng Khách sạn</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Tạo Đơn Đặt Phòng Mới</h2>
+        <form id="bookingForm">
+            <div class="mb-3">
+                <label class="form-label">Loại phòng:</label><br>
+                <input type="radio" name="roomType" value="Standard" checked> Standard
+                <input type="radio" name="roomType" value="Suite" class="ms-3"> Suite
+            </div>
+
+            <div id="suiteFields" class="hidden dynamic-field mb-3">
+                <label>Tên Quản gia:</label>
+                <input type="text" id="butlerName" class="form-control">
+                <label class="mt-2">Mã thẻ VIP:</label>
+                <input type="text" id="vipCard" class="form-control">
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="hasAirportTransfer">
+                <label class="form-check-label">Đưa đón sân bay</label>
+            </div>
+
+            <div id="flightFields" class="hidden dynamic-field mb-3">
+                <label>Số hiệu chuyến bay:</label>
+                <input type="text" id="flightNumber" class="form-control">
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="handleFormSubmit()">Xác nhận đặt</button>
+        </form>
+    </div>
+
+    <script src="js/dynamic-ui.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        function handleFormSubmit() {
+            // Logic lấy dữ liệu từ DOM và gọi hàm submitBooking() trong api.js
+        }
+    </script>
+</body>
+</html>
