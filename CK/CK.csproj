@@ -25,4 +25,8 @@
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" Condition="'$(TargetFramework)' == 'net461'" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Migrations\" />
+	</ItemGroup>
+
 </Project>

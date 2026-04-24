@@ -21,3 +21,9 @@ public class SuiteBookingRequest : BaseBookingRequest
     public string? ButlerName { get; set; }
     public string? VipCardNumber { get; set; }
 }
+
+public class AdminUpdateBookingRequest
+{
+    public string Status { get; set; } = string.Empty;
+    public string? ButlerName { get; set; }
+}
