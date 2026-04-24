@@ -7,9 +7,13 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h2>Quản lý Đặt Phòng (Admin)</h2>
-        <button class="btn btn-warning mb-3" onclick="loginAdmin()">1. Đăng nhập Admin</button>
-        <button class="btn btn-info mb-3" onclick="loadBookings()">2. Tải danh sách</button>
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+            <h2>Quản lý Đặt Phòng (Admin)</h2>
+            <button class="btn btn-outline-secondary" onclick="logout()">Đăng xuất</button>
+        </div>
+
+        <button class="btn btn-info mb-3" onclick="loadBookings()">Làm mới danh sách</button>
+
         <table class="table table-bordered mt-3">
             <thead class="table-dark">
                 <tr>
@@ -44,7 +48,7 @@
                             <option value="CheckedOut">CheckedOut</option>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" id="butlerFieldGroup">
                         <label>Phân bổ quản gia (Chỉ hiển thị nếu là Suite)</label>
                         <input type="text" id="updateButler" class="form-control" placeholder="Tên quản gia">
                     </div>
@@ -59,15 +63,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/api.js"></script>
     <script>
+        // Tự động load danh sách khi vào trang (nếu đã đăng nhập)
+        window.onload = () => {
+            loadBookings();
+        };
+
         async function logout() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login.html';
         }
-
-        // Hàm loadBookings tự động chạy khi mở trang (nếu đã đăng nhập):
-        window.onload = () => {
-            loadBookings();
-        };
 
         async function loadBookings() {
             const res = await fetchWithAuth('/bookings');
@@ -78,7 +82,6 @@
             tbody.innerHTML = '';
 
             data.forEach(b => {
-                // Xử lý hiển thị thông tin nhạy cảm
                 let extraInfo = '';
                 if (b.roomType === 'Suite') {
                     extraInfo = `Quản gia: ${b.butlerName || 'Chưa có'}<br>VIP Card: <span class="text-danger fw-bold">${b.vipCardNumber || 'Bảo mật'}</span>`;
@@ -86,30 +89,40 @@
                     extraInfo = `Phí dọn dẹp: ${b.cleaningFee}`;
                 }
 
+                // THÊM MỚI: Truyền thêm biến b.roomType vào hàm openUpdateModal
                 tbody.innerHTML += `
-                        <tr class="${b.status === 'SoftDeleted' ? 'table-secondary text-muted' : ''}">
-                            <td>${b.bookingId}</td>
-                            <td><span class="badge bg-secondary">${b.roomType}</span></td>
-                            <td>${new Date(b.checkInDate).toLocaleString()}</td>
-                            <td><span class="badge bg-info">${b.status}</span></td>
-                            <td>${extraInfo}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="openUpdateModal('${b.bookingId}', '${b.status}', '${b.butlerName || ''}')">Sửa</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteBooking('${b.bookingId}')">Xóa mềm</button>
-                            </td>
-                        </tr>
-                    `;
+                            <tr class="${b.status === 'SoftDeleted' ? 'table-secondary text-muted' : ''}">
+                                <td>${b.bookingId}</td>
+                                <td><span class="badge bg-secondary">${b.roomType}</span></td>
+                                <td>${new Date(b.checkInDate).toLocaleString()}</td>
+                                <td><span class="badge bg-info">${b.status}</span></td>
+                                <td>${extraInfo}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="openUpdateModal('${b.bookingId}', '${b.status}', '${b.butlerName || ''}', '${b.roomType}')">Sửa</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteBooking('${b.bookingId}')">Xóa mềm</button>
+                                </td>
+                            </tr>
+                        `;
             });
         }
 
-        function openUpdateModal(id, status, butler) {
+        // THÊM MỚI: Nhận thêm biến roomType và logic ẩn/hiện
+        function openUpdateModal(id, status, butler, roomType) {
             document.getElementById('updateBookingId').value = id;
             document.getElementById('updateStatus').value = status;
             document.getElementById('updateButler').value = butler;
+
+            // Xử lý ẩn hiện field Quản gia
+            const butlerGroup = document.getElementById('butlerFieldGroup');
+            if (roomType === 'Suite') {
+                butlerGroup.style.display = 'block'; // Hiện
+            } else {
+                butlerGroup.style.display = 'none';  // Ẩn
+            }
+
             new bootstrap.Modal(document.getElementById('updateModal')).show();
         }
 
-        // GỌI API HTTP PUT XUỐNG BACKEND (Vấn đề 2)
         async function submitUpdate() {
             const id = document.getElementById('updateBookingId').value;
             const status = document.getElementById('updateStatus').value;

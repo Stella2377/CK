@@ -8,7 +8,14 @@
 </head>
 <body>
     <div class="container">
-        <h2>Tạo Đơn Đặt Phòng Mới</h2>
+
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-4 border-bottom pb-2">
+            <h2>Tạo Đơn Đặt Phòng Mới</h2>
+            <div>
+                <a href="/login.html" class="btn btn-outline-primary">Đăng nhập / Đăng ký</a>
+                <button class="btn btn-outline-secondary" onclick="logout()">Đăng xuất</button>
+            </div>
+        </div>
         <form id="bookingForm">
             <div class="mb-3">
                 <label class="form-label">Loại phòng:</label><br>
@@ -40,33 +47,37 @@
     <script src="js/dynamic-ui.js"></script>
     <script src="js/api.js"></script>
     <script>
-        async function handleFormSubmit() {
-          
+        // THÊM MỚI: Hàm xử lý đăng xuất
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            alert("Đã đăng xuất!");
+            window.location.reload(); // Tải lại trang sau khi đăng xuất
+        }
 
-            // 2. LẤY DỮ LIỆU TỪ GIAO DIỆN (DOM)
+        async function handleFormSubmit() {
+            // 1. LẤY DỮ LIỆU TỪ GIAO DIỆN (DOM)
             const roomType = document.querySelector('input[name="roomType"]:checked').value;
             const hasAirportTransfer = document.getElementById('hasAirportTransfer').checked;
             const flightNumber = document.getElementById('flightNumber').value;
 
-            // 3. TẠO DỮ LIỆU CHUNG (Payload)
-            // Lưu ý: BookingId và CheckInDate là bắt buộc phải có vì bên C# ta dùng 'required init'
+            // 2. TẠO DỮ LIỆU CHUNG (Payload)
             const bookingData = {
-                bookingId: 'BK' + Date.now(), // Tự generate mã đặt phòng ngẫu nhiên
-                checkInDate: new Date().toISOString(), // Lấy giờ hiện tại
-                amount: roomType === 'Suite' ? 5000000 : 1000000, // Tiền (Phải > 0 để qua được FluentValidation)
+                bookingId: 'BK' + Date.now(),
+                checkInDate: new Date().toISOString(),
+                amount: roomType === 'Suite' ? 5000000 : 1000000,
                 hasAirportTransfer: hasAirportTransfer,
                 flightNumber: hasAirportTransfer ? flightNumber : null
             };
 
-            // 4. BỔ SUNG DỮ LIỆU RIÊNG THEO TỪNG LOẠI PHÒNG
+            // 3. BỔ SUNG DỮ LIỆU RIÊNG THEO TỪNG LOẠI PHÒNG
             if (roomType === 'Suite') {
                 bookingData.butlerName = document.getElementById('butlerName').value;
                 bookingData.vipCardNumber = document.getElementById('vipCard').value;
             } else {
-                bookingData.cleaningFee = 150000; // Phí dọn dẹp của phòng Standard
+                bookingData.cleaningFee = 150000;
             }
 
-            // 5. GỌI HÀM SUBMIT XUỐNG BACKEND (nằm trong file api.js)
+            // 4. GỌI HÀM SUBMIT XUỐNG BACKEND
             console.log("Dữ liệu gửi đi:", bookingData);
             await submitBooking(bookingData, roomType);
         }
