@@ -7,24 +7,25 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-
+    <div class="container mb-5">
         <div class="d-flex justify-content-between align-items-center mt-3 mb-4 border-bottom pb-2">
-            <h2>Tạo Đơn Đặt Phòng Mới</h2>
+            <h2>Hệ Thống Đặt Phòng</h2>
             <div>
-                <a href="/login.html" class="btn btn-outline-primary">Đăng nhập / Đăng ký</a>
-                <button class="btn btn-outline-secondary" onclick="logout()">Đăng xuất</button>
+                <a href="/login.html" id="btnLogin" class="btn btn-outline-primary">Đăng nhập / Đăng ký</a>
+                <button id="btnLogout" class="btn btn-outline-secondary" onclick="logout()" style="display: none;">Đăng xuất</button>
             </div>
         </div>
-        <form id="bookingForm">
-            <div class="mb-3">
-                <label class="form-label">Loại phòng:</label><br>
+
+        <form id="bookingForm" class="mb-5 p-3 border rounded bg-light">
+            <h4>Tạo Đơn Đặt Phòng Mới</h4>
+            <div class="mb-3 mt-3">
+                <label class="form-label fw-bold">Loại phòng:</label><br>
                 <input type="radio" name="roomType" value="Standard" checked> Standard
                 <input type="radio" name="roomType" value="Suite" class="ms-3"> Suite
             </div>
 
             <div id="suiteFields" class="hidden dynamic-field mb-3">
-                <label>Tên Quản gia:</label>
+                <label>Tên Quản gia (yêu cầu đối với Suite):</label>
                 <input type="text" id="butlerName" class="form-control">
                 <label class="mt-2">Mã thẻ VIP:</label>
                 <input type="text" id="vipCard" class="form-control">
@@ -40,36 +41,93 @@
                 <input type="text" id="flightNumber" class="form-control">
             </div>
 
+            <div id="flightFields" class="hidden dynamic-field mb-3">
+                <label>Số hiệu chuyến bay:</label>
+                <input type="text" id="flightNumber" class="form-control">
+            </div>
+
+            <div class="mb-4 mt-3">
+                <label class="form-label fw-bold">Ghi chú yêu cầu thêm:</label>
+                <textarea id="createNotes" class="form-control" rows="2" placeholder="Ví dụ: Cần phòng view biển, thêm gối..."></textarea>
+            </div>
             <button type="button" class="btn btn-primary" onclick="handleFormSubmit()">Xác nhận đặt</button>
         </form>
+
+        <div class="mt-4 border-top pt-4">
+            <h3>Danh Sách Đơn Của Tôi</h3>
+            <button class="btn btn-sm btn-info mb-3" onclick="loadUserBookings()">Làm mới danh sách</button>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã Đặt Phòng</th>
+                        <th>Loại phòng</th>
+                        <th>Ngày Check-in</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <div class="modal fade" id="updateNoteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cập nhật Ghi chú yêu cầu thêm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="updateNoteBookingId">
+                    <div class="mb-3">
+                        <label>Nội dung ghi chú</label>
+                        <textarea id="updateNoteContent" class="form-control" rows="3" placeholder="Nhập yêu cầu thêm của bạn..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitUpdateNote()">Lưu cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/dynamic-ui.js"></script>
     <script src="js/api.js"></script>
+
     <script>
-        // THÊM MỚI: Hàm xử lý đăng xuất
+        // Tự động tải danh sách ngay khi vào trang nếu đã login
+        window.onload = () => {
+            loadUserBookings();
+        };
+
         async function logout() {
             await fetch('/api/auth/logout', { method: 'POST' });
             alert("Đã đăng xuất!");
-            window.location.reload(); // Tải lại trang sau khi đăng xuất
+            window.location.reload();
         }
 
         async function handleFormSubmit() {
-            // 1. LẤY DỮ LIỆU TỪ GIAO DIỆN (DOM)
             const roomType = document.querySelector('input[name="roomType"]:checked').value;
             const hasAirportTransfer = document.getElementById('hasAirportTransfer').checked;
             const flightNumber = document.getElementById('flightNumber').value;
 
-            // 2. TẠO DỮ LIỆU CHUNG (Payload)
+            // Lấy giá trị từ ô ghi chú mới thêm
+            const notes = document.getElementById('createNotes').value;
+
             const bookingData = {
                 bookingId: 'BK' + Date.now(),
                 checkInDate: new Date().toISOString(),
                 amount: roomType === 'Suite' ? 5000000 : 1000000,
                 hasAirportTransfer: hasAirportTransfer,
-                flightNumber: hasAirportTransfer ? flightNumber : null
+                flightNumber: hasAirportTransfer ? flightNumber : null,
+                notes: notes // Truyền thêm ghi chú vào Payload
             };
 
-            // 3. BỔ SUNG DỮ LIỆU RIÊNG THEO TỪNG LOẠI PHÒNG
             if (roomType === 'Suite') {
                 bookingData.butlerName = document.getElementById('butlerName').value;
                 bookingData.vipCardNumber = document.getElementById('vipCard').value;
@@ -77,9 +135,93 @@
                 bookingData.cleaningFee = 150000;
             }
 
-            // 4. GỌI HÀM SUBMIT XUỐNG BACKEND
-            console.log("Dữ liệu gửi đi:", bookingData);
             await submitBooking(bookingData, roomType);
+
+            // Xóa form sau khi đặt thành công
+            document.getElementById('bookingForm').reset();
+            document.getElementById('suiteFields').classList.add('hidden');
+            document.getElementById('flightFields').classList.add('hidden');
+
+            loadUserBookings();
+        }
+
+        // THÊM MỚI: Load danh sách đơn phòng (Read)
+        async function loadUserBookings() {
+            const res = await fetchWithAuth('/bookings');
+
+            // Nếu chưa đăng nhập (API báo lỗi 401)
+            if (res.status === 401) {
+                // Ẩn Form đặt phòng và Bảng danh sách
+                document.getElementById('bookingForm').style.display = 'none';
+                document.getElementById('userTableBody').closest('.mt-4').style.display = 'none';
+
+                // Trạng thái: Chỉ hiện nút Đăng nhập
+                document.getElementById('btnLogin').style.display = 'inline-block';
+                document.getElementById('btnLogout').style.display = 'none';
+                return;
+            }
+
+            // Nếu đã đăng nhập thành công
+            // Hiện Form đặt phòng và Bảng danh sách
+            document.getElementById('bookingForm').style.display = 'block';
+            document.getElementById('userTableBody').closest('.mt-4').style.display = 'block';
+
+            // Trạng thái: Hiện nút Đăng xuất, ẩn Đăng nhập
+            document.getElementById('btnLogin').style.display = 'none';
+            document.getElementById('btnLogout').style.display = 'inline-block';
+
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(b => {
+                const canEdit = (b.status !== 'Paid' && b.status !== 'CheckedOut');
+                const btnClass = canEdit ? 'btn-warning' : 'btn-secondary';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${b.bookingId}</td>
+                        <td><span class="badge bg-secondary">${b.roomType}</span></td>
+                        <td>${new Date(b.checkInDate).toLocaleString()}</td>
+                        <td>${b.amount.toLocaleString()} VND</td>
+                        <td><span class="badge ${canEdit ? 'bg-info' : 'bg-success'}">${b.status}</span></td>
+                        <td>${b.notes || '<i class="text-muted">Không có</i>'}</td>
+                        <td>
+                            <button class="btn btn-sm ${btnClass}" 
+                                onclick="openUpdateNoteModal('${b.bookingId}', '${b.notes || ''}')"
+                                ${!canEdit ? 'disabled title="Không thể sửa khi đã Paid/CheckedOut"' : ''}>
+                                Sửa Ghi Chú
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // THÊM MỚI: Mở Modal Update Ghi Chú (Update)
+        function openUpdateNoteModal(id, currentNote) {
+            document.getElementById('updateNoteBookingId').value = id;
+            document.getElementById('updateNoteContent').value = currentNote;
+            new bootstrap.Modal(document.getElementById('updateNoteModal')).show();
+        }
+
+        // THÊM MỚI: Gửi API Update Ghi Chú (Update)
+        async function submitUpdateNote() {
+            const id = document.getElementById('updateNoteBookingId').value;
+            const notes = document.getElementById('updateNoteContent').value;
+
+            const res = await fetchWithAuth(`/bookings/${id}/notes`, {
+                method: 'PUT',
+                body: JSON.stringify({ notes: notes }) // Ánh xạ với class UpdateNoteRequest
+            });
+
+            if (res.ok) {
+                alert('Cập nhật ghi chú thành công!');
+                bootstrap.Modal.getInstance(document.getElementById('updateNoteModal')).hide();
+                loadUserBookings();
+            }
         }
     </script>
 </body>

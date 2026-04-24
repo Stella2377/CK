@@ -104,9 +104,9 @@ public class BookingsController : ControllerBase
 
     [HttpPut("{id}/notes")]
     [Authorize(Roles = "User")]
-    public async Task<IActionResult> UpdateNotes(string id, [FromBody] string notes)
+    public async Task<IActionResult> UpdateNotes(string id, [FromBody] UpdateNoteRequest request)
     {
-        await _bookingService.UpdateBookingNotesAsync(id, notes, CurrentUserId);
+        await _bookingService.UpdateBookingNotesAsync(id, request.Notes, CurrentUserId);
         return NoContent();
     }
 

@@ -27,3 +27,8 @@ public class AdminUpdateBookingRequest
     public string Status { get; set; } = string.Empty;
     public string? ButlerName { get; set; }
 }
+
+public class UpdateNoteRequest
+{
+    public string Notes { get; set; } = string.Empty;
+}
