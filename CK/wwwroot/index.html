@@ -41,14 +41,7 @@
     <script src="js/api.js"></script>
     <script>
         async function handleFormSubmit() {
-            // 1. GỌI API ĐĂNG NHẬP TRƯỚC (Rất quan trọng)
-            // Vì Backend yêu cầu [Authorize(Roles = "User")] mới được thêm Booking
-            console.log("Đang xử lý đăng nhập...");
-            await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: 'user', password: 'user123' })
-            });
+          
 
             // 2. LẤY DỮ LIỆU TỪ GIAO DIỆN (DOM)
             const roomType = document.querySelector('input[name="roomType"]:checked').value;
